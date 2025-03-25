@@ -331,7 +331,7 @@ def open_single_file():
     ps4_button = tk.Button(platform_window, text="PS4", command=on_ps4_selected)
     ps4_button.pack(padx=20, pady=5)
 
-    pc_button = tk.Button(platform_window, text="PC", command=on_pc_selected)
+    pc_button = tk.Button(platform_window, text="PC (NOT WORKING)", command=on_pc_selected)
     pc_button.pack(padx=20, pady=5)
 
     # Keep the platform selection window open until the user selects an option
@@ -4549,7 +4549,7 @@ button_width = 15  # Adjust this value to make buttons wider or narrower
 button_padding = 5  # Set padding for buttons
 
 ttk.Button(left_frame, text="Load Folder (PS4)", width=button_width, command=open_folder).pack(pady=10, padx=10)  # Added padx
-ttk.Button(left_frame, text="Load File (PS4/PC)", width=button_width, command=open_single_file).pack(pady=10, padx=10)  # Added padx
+ttk.Button(left_frame, text="Load File (PS4)", width=button_width, command=open_single_file).pack(pady=10, padx=10)  # Added padx
 
 
 # Create the "Toggle Theme" button in the left frame at the bottom
