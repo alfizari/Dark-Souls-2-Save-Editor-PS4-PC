@@ -17,7 +17,12 @@ a = Analysis(
         *[(os.path.join(debug_folder, f), os.path.join('Resources', 'Debug')) 
           for f in os.listdir(debug_folder) if os.path.isfile(os.path.join(debug_folder, f))]
     ],
-    hiddenimports=['cryptography'],
+    hiddenimports=[
+        'cryptography',
+        'cryptography.hazmat.primitives.ciphers',
+        'cryptography.hazmat.primitives.ciphers.algorithms',
+        'cryptography.hazmat.primitives.ciphers.modes',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
