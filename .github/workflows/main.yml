@@ -1,4 +1,4 @@
-name: BUILDBOT 
+name: BUILDBOT
 
 on:
   push:
@@ -22,7 +22,6 @@ jobs:
           python_ver: '3.12'
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN64'
-          additional_hooks_dir: 'pyinstaller_hooks'
  
   build-windows-32bit:
     runs-on: windows-latest
@@ -46,7 +45,7 @@ jobs:
 
       - name: Create Windows Executable (32-bit)
         run: |
-          pyinstaller src/build_win32.spec
+          pyinstaller src/build_win32.spec --additional-hooks-dir=src/pyinstaller_hooks  # Manually add custom hooks
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
 
@@ -55,7 +54,6 @@ jobs:
         with:
           name: Dark_Souls_3_Save_Editor_WIN32
           path: dist/Dark_Souls_3_Save_Editor_WIN32.exe
-          additional_hooks_dir: 'pyinstaller_hooks'
 
   build-linux_x86_64:
     runs-on: ubuntu-latest
@@ -66,13 +64,22 @@ jobs:
       - name: Install Python dependencies
         run: pip install cryptography
 
+      - name: Install PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
       - name: Create Linux Executable
-        uses: sayyid5416/pyinstaller@v1
+        run: |
+          pyinstaller src/build.spec --additional-hooks-dir=src/pyinstaller_hooks  # Manually add custom hooks
+        env:
+          PYTHONPATH: ${{ runner.workspace }}/src
+
+      - name: Upload Linux Executable
+        uses: actions/upload-artifact@v4
         with:
-          python_ver: '3.12'
-          spec: 'src/build.spec'
-          upload_exe_with_name: 'Dark_Souls_3_Save_Editor_LINUX_x86_64'
-          additional_hooks_dir: 'pyinstaller_hooks'
+          name: Dark_Souls_3_Save_Editor_LINUX_x86_64
+          path: dist/Dark_Souls_3_Save_Editor_LINUX_x86_64
 
   build-macos_silicon:
     runs-on: macos-latest
@@ -100,7 +107,7 @@ jobs:
       - name: Create macOS Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
-          pyinstaller src/build_mac.spec
+          pyinstaller src/build_mac.spec --additional-hooks-dir=src/pyinstaller_hooks  # Manually add custom hooks
           # Debug the dist directory to verify output structure
           echo "Listing contents of dist/ directory:"
           ls -R dist/
@@ -118,14 +125,12 @@ jobs:
             echo "Error: .app bundle not found!"
             exit 1
           fi
-
       - name: Create ZIP of .app Bundle
         run: |
           # Go to the dist directory and zip the entire .app bundle (not just Contents)
           cd dist
           zip -r Dark_Souls_3_Save_Editor_MAC.zip Dark_Souls_3_Save_Editor_App.app
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_SILICON.zip
-
       - name: Upload macOS Executable
         uses: actions/upload-artifact@v4
         with:
@@ -151,11 +156,12 @@ jobs:
           python3 -m pip install --upgrade pip  # Ensure pip is upgraded in the virtual environment
           python3 -m pip install pyinstaller  # Install PyInstaller inside the virtual environment
           python3 -m pip --version  # Debug: Check pip version
+
       - name: Create macOS Intel Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
           # Set environment variables to build for Intel architecture (x86_64)
-          arch -x86_64 pyinstaller src/build_mac.spec
+          arch -x86_64 pyinstaller src/build_mac.spec --additional-hooks-dir=src/pyinstaller_hooks  # Manually add custom hooks
           # Debug the dist directory to verify output structure
           echo "Listing contents of dist/ directory:"
           ls -R dist/
@@ -173,14 +179,12 @@ jobs:
             echo "Error: .app bundle not found!"
             exit 1
           fi
-
       - name: Create ZIP of .app Bundle
         run: |
           # Go to the dist directory and zip the entire .app bundle (not just Contents)
           cd dist
           zip -r Dark_Souls_3_Save_Editor_MAC.zip Dark_Souls_3_Save_Editor_App.app
           mv Dark_Souls_3_Save_Editor_MAC.zip ../Dark_Souls_3_Save_Editor_MAC_INTEL.zip
-
       - name: Upload macOS Intel Executable
         uses: actions/upload-artifact@v4
         with:
