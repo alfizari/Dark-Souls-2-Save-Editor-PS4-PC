@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        
+      - name: Install Python dependencies
+        run: pip install cryptography
       
       - name: Create Windows Executable (64-bit)
         uses: sayyid5416/pyinstaller@v1
@@ -25,6 +28,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        
+      - name: Install Python dependencies
+        run: pip install cryptography
 
       - name: Setup Python (32-bit)
         uses: actions/setup-python@v5
@@ -54,6 +60,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        
+      - name: Install Python dependencies
+        run: pip install cryptography
 
       - name: Create Linux Executable
         uses: sayyid5416/pyinstaller@v1
@@ -67,6 +76,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        
+      - name: Install Python dependencies
+        run: pip install cryptography
 
       - name: Setup Python
         uses: actions/setup-python@v5
