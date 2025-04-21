@@ -4,7 +4,11 @@ from glob import glob
 
 # Add Debug folder path
 debug_folder = os.path.join(os.getcwd(), 'src', 'Resources', 'Debug')
+from PyInstaller.utils.hooks import collect_submodules
+import PyInstaller.config
 
+# Collect additional modules you need
+hiddenimports = collect_submodules('cryptography')
 a = Analysis(
     ['Final.py'],
     pathex=[os.getcwd()],
@@ -17,8 +21,8 @@ a = Analysis(
         *[(os.path.join(debug_folder, f), os.path.join('Resources', 'Debug')) 
           for f in os.listdir(debug_folder) if os.path.isfile(os.path.join(debug_folder, f))]
     ],
-    hiddenimports=[], 
-    hookspath=['pyinstaller_hooks'],
+    hiddenimports=hiddenimports,
+    hookspath=['src/pyinstaller_hooks'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
