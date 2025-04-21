@@ -22,7 +22,7 @@ jobs:
           python_ver: '3.12'
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN64'
- 
+
   build-windows-32bit:
     runs-on: windows-latest
     steps:
@@ -44,8 +44,7 @@ jobs:
           pip install pyinstaller
 
       - name: Create Windows Executable (32-bit)
-        run: |
-          pyinstaller src/build_win32.spec --additional-hooks-dir=src/pyinstaller_hooks  # Manually add custom hooks
+        run: pyinstaller src/build_win32.spec  # No additional-hooks-dir needed
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
 
@@ -70,8 +69,7 @@ jobs:
           pip install pyinstaller
 
       - name: Create Linux Executable
-        run: |
-          pyinstaller src/build.spec --additional-hooks-dir=src/pyinstaller_hooks  # Manually add custom hooks
+        run: pyinstaller src/build.spec  # No additional-hooks-dir needed
         env:
           PYTHONPATH: ${{ runner.workspace }}/src
 
@@ -107,7 +105,7 @@ jobs:
       - name: Create macOS Executable
         run: |
           source venv/bin/activate  # Activate the virtual environment
-          pyinstaller src/build_mac.spec --additional-hooks-dir=src/pyinstaller_hooks  # Manually add custom hooks
+          pyinstaller src/build_mac.spec  # No additional-hooks-dir needed
           # Debug the dist directory to verify output structure
           echo "Listing contents of dist/ directory:"
           ls -R dist/
@@ -161,7 +159,7 @@ jobs:
         run: |
           source venv/bin/activate  # Activate the virtual environment
           # Set environment variables to build for Intel architecture (x86_64)
-          arch -x86_64 pyinstaller src/build_mac.spec --additional-hooks-dir=src/pyinstaller_hooks  # Manually add custom hooks
+          arch -x86_64 pyinstaller src/build_mac.spec  # No additional-hooks-dir needed
           # Debug the dist directory to verify output structure
           echo "Listing contents of dist/ directory:"
           ls -R dist/
