@@ -22,6 +22,7 @@ jobs:
           python_ver: '3.12'
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_WIN64'
+          additional_hooks_dir: 'pyinstaller_hooks'
  
   build-windows-32bit:
     runs-on: windows-latest
@@ -54,6 +55,7 @@ jobs:
         with:
           name: Dark_Souls_3_Save_Editor_WIN32
           path: dist/Dark_Souls_3_Save_Editor_WIN32.exe
+          additional_hooks_dir: 'pyinstaller_hooks'
 
   build-linux_x86_64:
     runs-on: ubuntu-latest
@@ -70,6 +72,7 @@ jobs:
           python_ver: '3.12'
           spec: 'src/build.spec'
           upload_exe_with_name: 'Dark_Souls_3_Save_Editor_LINUX_x86_64'
+          additional_hooks_dir: 'pyinstaller_hooks'
 
   build-macos_silicon:
     runs-on: macos-latest
