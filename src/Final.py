@@ -1,5 +1,6 @@
 ### THIS IS A FORK FROM DS3 EDITOR< THERE IS MANY UNUSED STUFF
 
+
 import json
 import glob
 import os
@@ -14,6 +15,7 @@ import sys
 import shutil
 import platform
 from system_test import test_system_compatibility
+from ds2unpacker import decrypt_ds2_sl2, encrypt_ds2_sl2
 import struct
 #just a flag
 # Constants
@@ -21,8 +23,7 @@ hex_pattern1_Fixed = '0A 00 00 00 6C 00 00 00 BC 00 01'
 possible_name_distances_for_name_tap = [-6732]
 souls_distance = -7632
 hp_distance= -7620
-fp_distance= None
-stamina_distance= None
+
 ng_distance=-5 ##new game from pattern2
 goods_magic_offset = 0
 goods_magic_range = 30000
@@ -424,30 +425,10 @@ def open_folder_pc(): ##for import i think
     
 def run_unpacker():
 
-    # Check if the EXE exists
-    exe_path = os.path.join(os.getcwd(), 'Resources', 'Debug', 'DS3SaveUnpacker.exe')
-    if not os.path.exists(exe_path):
-        print("Error: DS3SaveUnpacker.exe not found!")
-        return
-
     # Run the EXE using subprocess
     try:
-        if not test_system_compatibility():
-            raise RuntimeError("System is not properly configured to run the executable. Please install Wine for your system.")
-        
-        current_os = platform.system()
 
-        if current_os == 'Linux' or current_os == 'Darwin':  # More explicit syntax
-            result = subprocess.run(['wine', exe_path], check=True, text=True, capture_output=True)
-        else:  # Windows
-            result = subprocess.run([exe_path], check=True, text=True, capture_output=True)
-        
-        # Define the unpacked folder path
-        unpacked_folder = os.path.join(os.getcwd(), 'UnpackedFiles')
-        
-        # After unpacking, create the folder if it doesn't exist (in case EXE does not)
-        if not os.path.exists(unpacked_folder):
-            os.makedirs(unpacked_folder)
+        unpacked_folder = decrypt_ds2_sl2()
         
         # Now, show the files in the unpacked folder and search for character names
         open_folder_and_show_files(unpacked_folder)
@@ -457,31 +438,11 @@ def run_unpacker():
         return
     
 def run_unpacker_pack():
-
-    # Check if the EXE exists
-    exe_path = os.path.join(os.getcwd(), 'Resources', 'Debug', 'DS3SaveUnpacker.exe')
-    if not os.path.exists(exe_path):
-        print("Error: DS3SaveUnpacker.exe not found!")
-        return
-
-    # Run the EXE using subprocess
     try:
-        if not test_system_compatibility():
-            raise RuntimeError("System is not properly configured to run the executable. Please install Wine for your system.")
         
-        current_os = platform.system()
+        unpacked_folder = decrypt_ds2_sl2()
 
-        if current_os == 'Linux' or current_os == 'Darwin':  # More explicit syntax
-            result = subprocess.run(['wine', exe_path], check=True, text=True, capture_output=True)
-        else:  # Windows
-            result = subprocess.run([exe_path], check=True, text=True, capture_output=True)
         
-        # Define the unpacked folder path
-        unpacked_folder = os.path.join(os.getcwd(), 'UnpackedFiles')
-        
-        # After unpacking, create the folder if it doesn't exist (in case EXE does not)
-        if not os.path.exists(unpacked_folder):
-            os.makedirs(unpacked_folder)
         
         # Now, show the files in the unpacked folder and search for character names
         open_folder_and_show_files_pc(unpacked_folder)
@@ -493,30 +454,8 @@ def run_unpacker_pack():
 
 ###PACK the unpacked files using release exe
 def run_unpacker_repack():
-    # Check if the EXE exists
-    exe_path = os.path.join(os.getcwd(), 'Resources', 'Debug', 'DS3SaveUnpackers.exe')
-    if not os.path.exists(exe_path):
-        print("Error: DS3SaveUnpackers.exe not found!")
-        return
-
-    # Run the EXE using subprocess
     try:
-        if not test_system_compatibility():
-            raise RuntimeError("System is not properly configured to run the executable. Please install Wine for your system.")
-        
-        current_os = platform.system()
-
-        if current_os == 'Linux' or current_os == 'Darwin':  # More explicit syntax
-            result = subprocess.run(['wine', exe_path], check=True, text=True, capture_output=True)
-        else:  # Windows
-            result = subprocess.run([exe_path], check=True, text=True, capture_output=True)
-        
-        # Define the unpacked folder path
-        unpacked_folder = os.path.join(os.getcwd(), 'UnpackedFiles')
-        
-        # After unpacking, create the folder if it doesn't exist (in case EXE does not)
-        if not os.path.exists(unpacked_folder):
-            os.makedirs(unpacked_folder)
+       encrypt_ds2_sl2()
     
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while running the unpacker: {e.stderr}")
@@ -527,7 +466,7 @@ def run_unpacker_repack():
 # Function to open the folder and show files (search character names in them)
 def open_folder_and_show_files(folder_path):
     # Get all userdata files in the folder
-    userdata_files = sorted(glob.glob(os.path.join(folder_path, "USER_DATA*")))
+    userdata_files = sorted(glob.glob(os.path.join(folder_path, "USERDATA*")))
     character_names = []
 
     # Search for character names in the unpacked files
@@ -546,7 +485,7 @@ def open_folder_and_show_files(folder_path):
 
 def open_folder_and_show_files_pc(folder_path):
     # Get all userdata files in the folder
-    userdata_files = sorted(glob.glob(os.path.join(folder_path, "USER_DATA*")))
+    userdata_files = sorted(glob.glob(os.path.join(folder_path, "USERDATA*")))
     character_names = []
 
     # Search for character names in the unpacked files
@@ -566,6 +505,7 @@ def open_folder_and_show_files_pc(folder_path):
 
 
 def open_single_file_import():
+    messagebox.showinfo("HOW TO USE (TIPS NOT ERROR)", "Load your main save file first and then choose a character. Importing will replace the current character data with the new one")
     # Create a new tkinter window for the platform selection
     platform_window = tk.Toplevel()
     platform_window.title("Select Platform")
@@ -659,32 +599,12 @@ def replace_file_data(selected_file, selected_name, top):
         current_name_var.set(selected_name)
         
         with open(original_file_path, 'r+b') as file:  # Open the file in read-write binary mode
-            # Define the value to be written as bytes
-            value = bytes.fromhex('62 00 00 00 62 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 01')
-            offset1 = find_last_hex_offset(original_file_path, very_last_fixed_pattern)
             
-            # First case: pattern found, write value and delete bytes
-            if offset1 is not None:
-                offset2 = offset1 + 12
-                file.seek(offset2)  # Move to the offset position
-                file.write(value)  # Write the bytes directly
-                delete_first_4_bytes(file)
-                load_file_data(original_file_path)
+            load_file_data(original_file_path)
 
-                # Show success message
-                import_message_var.set(f"Character '{selected_name}' imported successfully!")
-                top.destroy()
-            
-            # Second case: pattern not found, only delete bytes
-            else:
-                delete_first_4_bytes(file)
-                load_file_data(original_file_path)
-
-                # Show message about missing steam ID
-                import_message_var.set(f"Character '{selected_name}' imported successfully!")
-                messagebox.showinfo("Save imported", "This is an old version save, some of the editor features may not work properly. load the save in your PS4 to update the save to the latest version.")
-                top.destroy()
-
+            # Show success message
+            import_message_var.set(f"Character '{selected_name}' imported successfully!")
+            top.destroy()
     except Exception as e:
         print(f"Error occurred while replacing file data: {e}")
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
@@ -740,44 +660,15 @@ def replace_file_data_pc(selected_file, selected_name, top):
         # Update the main window with the new character name
         current_name_var.set(selected_name)
 
-        # Ask for the Steam ID using the new window and provide a callback to handle the result
-        def handle_steam_id(steam_id_bytes):
-            if not steam_id_bytes:
-                return  # If no valid Steam ID, stop further processing
 
-            # Define the base value, first part remains the same, but the FF byte needs to be replaced
-            value = bytes.fromhex('62 00 00 00 62 00 00 00 01 00 00 00 00 00 00 00 FF FF 89 5D 78 45 63 01 00 01 01')
+        # Open the original file and replace data
+        with open(original_file_path, 'r+b') as file:
+            load_file_data(original_file_path)
 
-            # Ensure Steam ID is 8 bytes and replace starting from byte 16 onward
-            if len(steam_id_bytes) == 8:  # Ensure the Steam ID is 8 bytes
-                value = value[:16] + steam_id_bytes + value[24:]  # Replace from byte 16 onward with Steam ID
-            else:
-                messagebox.showerror("Invalid Steam ID", "Steam ID must be exactly 8 bytes!")
-                return
+            import_message_var.set(f"Character '{selected_name}' imported successfully!")
+            top.destroy()
 
-            # Open the original file and replace data
-            with open(original_file_path, 'r+b') as file:
-                offset1 = find_last_hex_offset(original_file_path, very_last_fixed_pattern)
-
-                if offset1 is not None:
-                    offset2 = offset1 + 12
-                    file.seek(offset2)
-                    file.write(value)  # Write the new value with the Steam ID
-                    add_initial_bytes(file)
-                    load_file_data(original_file_path)
-
-                    import_message_var.set(f"Character '{selected_name}' imported successfully!")
-                    top.destroy()
-
-                else:
-                    load_file_data(original_file_path)
-
-                    import_message_var.set(f"Character '{selected_name}' imported successfully!")
-                    messagebox.showinfo("Save imported", "This is an old version save, some of the editor features may not work properly. The save might not work as wanted.")
-                    top.destroy()
-
-        # Open the Steam ID entry window
-        ask_steam_id_window(handle_steam_id)
+                
 
     except Exception as e:
         print(f"Error occurred while replacing file data: {e}")
@@ -875,14 +766,7 @@ def load_file_data(file_path):
         current_hp = find_value_at_offset(file_path, hp_offset)
         current_hp_var.set(current_hp if current_hp is not None else "N/A")
 
-        #FP
-        fp_offset = calculate_offset2(offset1, fp_distance)
-        current_fp = find_value_at_offset(file_path, fp_offset)
-        current_fp_var.set(current_fp if current_fp is not None else "N/A")
-        #STAMINA
-        stamina_offset = calculate_offset2(offset1, stamina_distance)
-        current_stamina = find_value_at_offset(file_path, stamina_offset)
-        current_stamina_var.set(current_stamina if current_stamina is not None else "N/A")
+        
     offsetng = find_hex_offset(file_path, hex_pattern5_Fixed) 
     if offsetng is not None:
         #new game
@@ -3735,7 +3619,7 @@ def refresh_ring_list(file_path):
             replace_button = ttk.Button(ring_frame, text="Replace", command=lambda ring=ring_name: choose_ring_replacement(ring))
             replace_button.pack(side="right", padx=5)
     else:
-        messagebox.showinfo("Info", "No rings found.")
+        messagebox.showinfo("Info", "rings found.")
 
 def choose_ring_replacement(ring_name):
     window2 = tk.Toplevel(window)
@@ -3974,7 +3858,7 @@ def refresh_storage_quantity_list(file_path):
             update_button = ttk.Button(item_frame, text="Update Quantity", command=lambda item_offset=item_offset, new_quantity_var=new_quantity_var: update_item_quantity_in_file(file_path, item_offset, new_quantity_var))
             update_button.pack(side="right", padx=5)
     else:
-        messagebox.showinfo("Info", "No items found.")
+        messagebox.showinfo("Info", "items found.")
 
 def find_storage_items_with_quantity(file_path, storage_offset, storage_range):
     global found_storage_items_with_quantity
@@ -4228,7 +4112,7 @@ def refresh_item_list(file_path):
             replace_button = ttk.Button(item_frame, text="Replace", command=lambda item=item_name: choose_replacement(item))
             replace_button.pack(side="right", padx=5)
     else:
-        messagebox.showinfo("Info", "No items found.")
+        messagebox.showinfo("Info", "items found.")
 
 # refresh rings
 
@@ -4272,7 +4156,7 @@ def refresh_weapon_list(file_path):
             replace_button = ttk.Button(weapon_frame, text="Replace", command=lambda weapon=weapon_name: replace_weapon(weapon))
             replace_button.pack(side="right", padx=5)
     else:
-        messagebox.showinfo("Info", "No weapons found.")
+        messagebox.showinfo("Info", "weapons found.")
 
 # for armor
 def refresh_armor_list(file_path):
@@ -4310,7 +4194,7 @@ def refresh_armor_list(file_path):
             replace_button = ttk.Button(armor_frame, text="Replace", command=lambda armor=armor_name: replace_armor(armor))
             replace_button.pack(side="right", padx=5)
     else:
-        messagebox.showinfo("Info", "No armor found.")
+        messagebox.showinfo("Info", "armor found.")
 
 def replace_weapon(weapon_name):
 
@@ -4549,7 +4433,9 @@ button_width = 15  # Adjust this value to make buttons wider or narrower
 button_padding = 5  # Set padding for buttons
 
 ttk.Button(left_frame, text="Load Folder (PS4)", width=button_width, command=open_folder).pack(pady=10, padx=10)  # Added padx
-ttk.Button(left_frame, text="Load File (PS4)", width=button_width, command=open_single_file).pack(pady=10, padx=10)  # Added padx
+ttk.Button(left_frame, text="Load File (PS4/PC)", width=button_width, command=open_single_file).pack(pady=10, padx=10)
+ttk.Button(left_frame, text="Import Save", width=button_width, command= open_single_file_import).pack(pady=10, padx=10)  # Added padx
+ttk.Button(left_frame, text="Save PC file", width=button_width, command=run_unpacker_repack).pack(pady=10, padx=10)
 
 
 # Create the "Toggle Theme" button in the left frame at the bottom
@@ -4880,6 +4766,7 @@ my_label.pack(side="top", anchor="ne", padx=10, pady=5)
 we_label = tk.Label(window, text="USE AT YOUR OWN RISK. EDITING STATS AND HP COULD GET YOU BANNED", anchor="w", padx=10)
 we_label.pack(side="bottom", anchor="nw", padx=10, pady=5)
 messagebox.showinfo("Welcome", "Not responsible for any loss of data, use at your own risk. Always backup your save files before editing, Adding Key items will get you banned")
+messagebox.showinfo("IMPORTANT", "PS4 file auto saves, when you add stuff there is no confirmation prompt so don't wworry")
 # Run 
 window.mainloop()
 
