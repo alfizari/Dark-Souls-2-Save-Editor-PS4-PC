@@ -13,3 +13,6 @@ You no longer need to replace item
 3-ADD Spells
 4-ADD rings
 5-ADD armor
+
+
+## Credit to jtesta/souls_givifier for the decryption and encryption of sl2 file using a modfied script. https://github.com/jtesta/souls_givifier
