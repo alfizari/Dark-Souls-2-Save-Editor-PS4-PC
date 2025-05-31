@@ -15,7 +15,7 @@ import sys
 import shutil
 import platform
 from system_test import test_system_compatibility
-from ds2unpacker import decrypt_ds2_sl2, encrypt_ds2_sl2
+from ds2unpackercopy import decrypt_ds2_sl2, encrypt_modified_files ## Credit to https://github.com/jtesta/souls_givifier
 import struct
 #just a flag
 # Constants
@@ -23,8 +23,6 @@ hex_pattern1_Fixed = '0A 00 00 00 6C 00 00 00 BC 00 01'
 possible_name_distances_for_name_tap = [-6732]
 souls_distance = -7632
 hp_distance= -7620
-
-ng_distance=-5 ##new game from pattern2
 goods_magic_offset = 0
 goods_magic_range = 30000
 storage_box_distance = 35900   
@@ -33,7 +31,7 @@ gesture_offsets= -3800
 hex_pattern2_Fixed= 'FF FF 00 00 00 00 FF FF FF FF 00 00 00 00 FF FF FF FF'
 hex_pattern5_Fixed='00 00 00 00 00 00 00 FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00 FF FF FF FF FF FF'
 very_last_fixed_pattern= 'FF FF FF FF FF FF FF FF FF FF FF FF 62'
-
+ng_distance = -6664
 
 
 # Stats offsets
@@ -455,11 +453,17 @@ def run_unpacker_pack():
 ###PACK the unpacked files using release exe
 def run_unpacker_repack():
     try:
-       encrypt_ds2_sl2()
+        output_sl2 = filedialog.asksaveasfilename(
+            title="Save Repacked SL2 File",
+            defaultextension=".sl2",
+            filetypes=[("SL2 Files", "*.sl2")],
+        )
+        
+        if output_sl2:
+            encrypt_modified_files(output_sl2)
     
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while running the unpacker: {e.stderr}")
-        return
+    except Exception as e:
+        print(f"An error occurred while repacking: {e}")
    
 
     
@@ -766,13 +770,11 @@ def load_file_data(file_path):
         current_hp = find_value_at_offset(file_path, hp_offset)
         current_hp_var.set(current_hp if current_hp is not None else "N/A")
 
-        
-    offsetng = find_hex_offset(file_path, hex_pattern5_Fixed) 
-    if offsetng is not None:
-        #new game
-        ng_offset = calculate_offsetng2(offsetng, ng_distance)
+        #NG
+        ng_offset = calculate_offsetng2(offset1, ng_distance)
         current_ng = find_value_at_offset(file_path, ng_offset)
         current_ng_var.set(current_ng if current_ng is not None else "N/A")
+
 
 
 
@@ -4760,7 +4762,7 @@ storage_label.pack(padx=10, pady=10, fill="x")
 
 canvas_frame = canvas.create_window((0, 0), window=storage_list_frame, anchor="nw")
 
-my_label = tk.Label(window, text="Made by Alfazari911 --   Thanks to Nox and BawsDeep for help", anchor="e", padx=10)
+my_label = tk.Label(window, text="Made by Alfazari911 --   Thanks to Nox, BawsDeep, and AsianMop for help", anchor="e", padx=10)
 my_label.pack(side="top", anchor="ne", padx=10, pady=5)
 
 we_label = tk.Label(window, text="USE AT YOUR OWN RISK. EDITING STATS AND HP COULD GET YOU BANNED", anchor="w", padx=10)
