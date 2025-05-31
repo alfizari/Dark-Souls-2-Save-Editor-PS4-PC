@@ -17,3 +17,4 @@ You no longer need to replace item
 
 
 ## Credit to jtesta/souls_givifier for the decryption and encryption of sl2 file using a modfied script. https://github.com/jtesta/souls_givifier
+# Thanks to @AsianMop For the Game Copy
