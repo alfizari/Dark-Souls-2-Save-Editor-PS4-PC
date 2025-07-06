@@ -330,7 +330,7 @@ def open_single_file():
     ps4_button = tk.Button(platform_window, text="PS4", command=on_ps4_selected)
     ps4_button.pack(padx=20, pady=5)
 
-    pc_button = tk.Button(platform_window, text="PC (NOT WORKING)", command=on_pc_selected)
+    pc_button = tk.Button(platform_window, text="PC", command=on_pc_selected)
     pc_button.pack(padx=20, pady=5)
 
     # Keep the platform selection window open until the user selects an option
@@ -587,28 +587,132 @@ def show_character_names_in_toplevel_ps4(character_names):
         character_button.pack(fill="x", padx=5, pady=2)
 
 # Function to replace the original file's data with the selected file's data
-def replace_file_data(selected_file, selected_name, top):
-    # Ensure the original file is loaded (you can use the loaded file path from your app)
-    original_file_path = file_path_var.get()  # This should be the path of the currently loaded file
+def replace_file_data_pc(selected_file, selected_name, top):
+    original_file_path = file_path_var.get()  # Path of the currently loaded file
 
     if not os.path.exists(original_file_path):
-        print("Error: Load your PS4 Save First!")
+        print("Error: Load your PC Save First!")
         return
 
     try:
         # Copy the content of the selected file into the original file
         shutil.copy(selected_file, original_file_path)
         
+        # Handle specific userdata file patterns
+        selected_file_name = os.path.basename(selected_file)
+        selected_file_dir = os.path.dirname(selected_file)
+        original_file_dir = os.path.dirname(original_file_path)
+        original_file_name = os.path.basename(original_file_path)
+        
+
+        file_mappings = {
+            'USERDATA_01': {
+                'source_pattern': 'userdata000X',  # X will be replaced with the actual number
+                'related_files': [
+                    ('userdata001X', 'USERDATA_11'),  # userdata0012 -> USERDATA_11 when replacing with userdata0002
+                    
+                ]
+            },
+            'USERDATA_02': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_12'),  # Example for another slot
+             
+                ]
+            },
+            'USERDATA_03': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_13'),
+              
+                ]
+            },
+            'USERDATA_04': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_14'),
+                
+                ]
+            },
+            'USERDATA_05': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_15'),
+               
+                ]
+            },
+            'USERDATA_06': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_16'),
+  
+                ]
+            },
+            'USERDATA_07': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_17'),
+                
+                ]
+            },
+            'USERDATA_08': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_18'),
+   
+                ]
+            },
+            'USERDATA_09': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_19'),
+
+                ]
+            },
+            'USERDATA_10': {
+                'source_pattern': 'userdata000X',
+                'related_files': [
+                    ('userdata001X', 'USERDATA_20'),
+
+                ]
+            },
+
+        }
+        
+        # Check if we're replacing a file that has related files
+        if original_file_name in file_mappings:
+            mapping = file_mappings[original_file_name]
+            
+            # Extract the number from the selected file (e.g., '2' from 'userdata0002')
+            if selected_file_name.startswith('userdata') and len(selected_file_name) >= 12:
+                source_number = selected_file_name[-1]  # Get the last character (the number)
+                
+                # Process related files
+                for source_template, target_file in mapping['related_files']:
+                    # Replace X with the actual number from the selected file
+                    source_file = source_template.replace('X', source_number)
+                    source_path = os.path.join(selected_file_dir, source_file)
+                    target_path = os.path.join(original_file_dir, target_file)
+                    
+                    if os.path.exists(source_path):
+                        try:
+                            shutil.copy(source_path, target_path)
+                            print(f"Copied {source_file} to {target_file}")
+                        except Exception as e:
+                            print(f"Warning: Could not copy {source_file}: {e}")
+                    else:
+                        print(f"Warning: Related file {source_file} not found")
+        
         # Update the main window with the new character name
         current_name_var.set(selected_name)
-        
-        with open(original_file_path, 'r+b') as file:  # Open the file in read-write binary mode
-            
+
+        # Open the original file and replace data
+        with open(original_file_path, 'r+b') as file:
             load_file_data(original_file_path)
 
-            # Show success message
-            import_message_var.set(f"Character '{selected_name}' imported successfully!")
-            top.destroy()
+        import_message_var.set(f"Character '{selected_name}' imported successfully!")
+        top.destroy()
+
     except Exception as e:
         print(f"Error occurred while replacing file data: {e}")
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
@@ -650,29 +754,132 @@ def ask_steam_id_window(callback):
     submit_button.pack(pady=10)
 
 # Function to replace the file data with Steam ID and character information
-def replace_file_data_pc(selected_file, selected_name, top):
+def replace_file_data(selected_file, selected_name, top):
     original_file_path = file_path_var.get()  # Path of the currently loaded file
 
     if not os.path.exists(original_file_path):
-        print("Error: Load your PC Save First!")
+        print("Error: Load your PS4 Save First!")
         return
 
     try:
         # Copy the content of the selected file into the original file
         shutil.copy(selected_file, original_file_path)
         
+        # Handle specific userdata file patterns
+        selected_file_name = os.path.basename(selected_file)
+        selected_file_dir = os.path.dirname(selected_file)
+        original_file_dir = os.path.dirname(original_file_path)
+        original_file_name = os.path.basename(original_file_path)
+        
+
+        file_mappings = {
+            'userdata0001': {
+                'source_pattern': 'USERDATA_0X',  # X will be replaced with the actual number
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0011'),  # userdata0012 -> USERDATA_11 when replacing with userdata0002
+                    
+                ]
+            },
+            'userdata0002': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0012'),  # Example for another slot
+             
+                ]
+            }, 
+            'userdata0003': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0013'),
+              
+                ]
+            },
+            'userdata0004': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0014'),
+                
+                ]
+            },
+            'userdata0005': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0015'),
+               
+                ]
+            },
+            'userdata0006': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0016'),
+  
+                ]
+            },
+            'userdata0007': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0017'),
+                
+                ]
+            },
+            'userdata0008': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0018'),
+   
+                ]
+            },
+            'userdata0009': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0019'),
+
+                ]
+            },
+            'userdata0010': {
+                'source_pattern': 'USERDATA_0X',
+                'related_files': [
+                    ('USERDATA_1X', 'userdata0020'),
+
+                ]
+            },
+
+
+        }
+        
+        # Check if we're replacing a file that has related files
+        if original_file_name in file_mappings:
+            mapping = file_mappings[original_file_name]
+            
+            # Extract the number from the selected file (e.g., '2' from 'userdata0002')
+            if selected_file_name.startswith('userdata') and len(selected_file_name) >= 12:
+                source_number = selected_file_name[-1]  # Get the last character (the number)
+                
+                # Process related files
+                for source_template, target_file in mapping['related_files']:
+                    # Replace X with the actual number from the selected file
+                    source_file = source_template.replace('X', source_number)
+                    source_path = os.path.join(selected_file_dir, source_file)
+                    target_path = os.path.join(original_file_dir, target_file)
+                    
+                    if os.path.exists(source_path):
+                        try:
+                            shutil.copy(source_path, target_path)
+                            print(f"Copied {source_file} to {target_file}")
+                        except Exception as e:
+                            print(f"Warning: Could not copy {source_file}: {e}")
+                    else:
+                        print(f"Warning: Related file {source_file} not found")
+        
         # Update the main window with the new character name
         current_name_var.set(selected_name)
-
 
         # Open the original file and replace data
         with open(original_file_path, 'r+b') as file:
             load_file_data(original_file_path)
 
-            import_message_var.set(f"Character '{selected_name}' imported successfully!")
-            top.destroy()
-
-                
+        import_message_var.set(f"Character '{selected_name}' imported successfully!")
+        top.destroy()
 
     except Exception as e:
         print(f"Error occurred while replacing file data: {e}")
@@ -778,16 +985,6 @@ def load_file_data(file_path):
 
 
 
-
-        # Refresh UI elements (e.g., inventory, stats, etc.)
-    
-        refresh_item_list(file_path)
-        refresh_weapon_list(file_path)
-        refresh_armor_list(file_path)
-        refresh_ring_list(file_path)
-        refresh_boss_tab()
-        refresh_bonfire_tab()
-        refresh_npc_tab()
 
 
        
@@ -3232,35 +3429,7 @@ def find_goods_offset(file_path, key_offset):
                 found_items.append((item_name, quantity))
                 
     return found_items
-## black list
-def search_weapon(search_query):
-    
-    try:
-        # Filter out blacklisted items
-        blacklisted_keywords = ["arrow"]
-        filtered_weapons = {
-            name: hex_pattern
-            for name, hex_pattern in inventory_weapons_hex_patterns.items()
-            if not any(blacklisted_word.lower() in name.lower() for blacklisted_word in blacklisted_keywords)
-        }
 
-        # Perform search in the filtered weapons
-        matching_weapons = {
-            name: hex_pattern
-            for name, hex_pattern in filtered_weapons.items()
-            if search_query.lower() in name.lower()
-        }
-
-        if not matching_weapons:
-            messagebox.showinfo("Search Result", "No matching weapons found.")
-            return
-
-        # Display matching weapons
-        results = "\n".join(matching_weapons.keys())
-        messagebox.showinfo("Search Result", f"Matching weapons:\n{results}")
-
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to search weapon: {e}")
 
 
 
@@ -3292,90 +3461,12 @@ def find_last_hex_offset(file_path, hex_pattern):
         return None
 
 # Function to get the current status of each boss, using the last occurrence of the hex pattern
-def get_boss_status(file_path):
-    global bosses_data
-    bosses_status = {}
-    # Use find_last_hex_offset to locate the last occurrence of the fixed pattern
-    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)
-    if offset1 is not None:
-        for boss, defeat_hex in bosses_data.items():
-            defeat_value = int(defeat_hex, 16)  # Convert hex string to integer for comparison
-            boss_distance = bosses_offsets_for_bosses_tap.get(boss)  # Retrieve distance for boss
-            
-            if boss_distance is not None:
-                # Calculate the offset based on fixed offset and boss distance
-                boss_offset = calculate_offset2(offset1, boss_distance)
-                
-                # Read only 1 byte at the boss offset
-                boss_value = find_value_at_offset(file_path, boss_offset, byte_size=1)
-                
-                # Determine if the boss is defeated or alive
-                bosses_status[boss] = "Defeated" if boss_value == defeat_value else "Alive"
-            else:
-                print(f"Warning: Offset for boss '{boss}' not found.")
-    return bosses_status
 
 
 
 
-def update_boss_status(file_path, boss_name, new_status):
-    global bosses_data
-    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)
-    if offset1 is not None and boss_name in bosses_data:
-        # Calculate offset for the specific boss
-        boss_distance = bosses_offsets_for_bosses_tap[boss_name]
-        boss_offset = calculate_offset2(offset1, boss_distance)
-        defeat_value = int(bosses_data[boss_name], 16)
-        
-        # Set the value to 1 byte: defeat value for "Defeated" or 0 for "Alive"
-        value = defeat_value if new_status == "Defeated" else 0  # 0 for alive
-        write_value_at_offset(file_path, boss_offset, value, byte_size=1)  # Write only 1 byte
-        messagebox.showinfo("Success", f"{boss_name} status updated to {new_status}.")
-        
-        # Refresh display to reflect changes
-        display_boss_status(file_path)
-    else:
-        messagebox.showerror("Error", "Failed to update boss status. Boss data or offset not found.")
 
-def display_boss_status(file_path):
-    bosses_status = get_boss_status(file_path)
-    
-    # Clear previous entries
-    for widget in boss_list_canvas.winfo_children():
-        widget.destroy()
-    
-    # Create a frame inside the canvas
-    boss_list_frame = ttk.Frame(boss_list_canvas)
-    boss_list_canvas.create_window((0, 0), window=boss_list_frame, anchor="nw")
 
-    # Populate the frame with the boss list
-    for boss, status in bosses_status.items():
-        boss_frame = ttk.Frame(boss_list_frame)
-        boss_frame.pack(fill="x", padx=10, pady=5)
-        
-        tk.Label(boss_frame, text=f"{boss} - Status:", anchor="w").pack(side="left", fill="x", padx=5)
-        
-        # Dropdown to change status with direct update
-        new_status_var = tk.StringVar(value=status)
-        def on_status_change(selected_status, boss=boss):
-            update_boss_status(file_path, boss, selected_status)
-
-        status_options = tk.OptionMenu(boss_frame, new_status_var, "Alive", "Defeated", command=lambda selection, boss=boss: on_status_change(selection, boss))
-        status_options.pack(side="right", padx=5)
-
-    # Update the scroll region of the canvas
-    boss_list_frame.update_idletasks()
-    boss_list_canvas.config(scrollregion=boss_list_canvas.bbox("all"))
-
-def refresh_boss_tab():
-    file_path = file_path_var.get()
-    if file_path:
-        display_boss_status(file_path)
-        
-def on_world_flag_tab_selected(event):
-    selected_tab = notebook.tab(notebook.select(), "text")
-    if selected_tab == "World Flag":
-        refresh_boss_tab()
 
 
 ##bonfire
@@ -3403,167 +3494,9 @@ def get_bonfire_status(file_path):
                 print(f"Warning: Offset for bonfire '{bonfire}' not found.")
     return bonfire_status
 
-def update_bonfire_status(file_path, bonfire_name, bonfire_status):
-    global bonfire_data
-    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)  # Find the last fixed offset
-    if offset1 is not None and bonfire_name in bonfire_data:
-        # Calculate offset for the specific bonfire
-        bonfire_distance = bonfire_offsets_for_bonfire_tap[bonfire_name]
-        bonfire_offset = calculate_offset2(offset1, bonfire_distance)
-        unlock_value = int(bonfire_data[bonfire_name], 16)  
-        # Determine the byte size based on the unlock_value
-        byte_size = 1 if unlock_value <= 0xFF else 2  # Use 1 byte if unlock_value fits, otherwise 2 bytes
-        
-        # Determine value to write: unlock_value for "Unlocked", 0 for "Locked"
-        if bonfire_status == "Unlocked":
-            value = unlock_value
-        else:
-            value = 0  # Write 0 using the same byte size as the unlock_value
-        
-        # Write the value at the calculated offset
-        write_value_at_offset(file_path, bonfire_offset, value, byte_size=byte_size)
-        
-        messagebox.showinfo("Success", f"{bonfire_name} status updated to {bonfire_status}.")
-        
-        # Refresh display to reflect changes
-        display_bonfire_status(file_path)
-    else:
-        messagebox.showerror("Error", "Failed to update bonfire status. Bonfire data or offset not found.")
 
 
-def display_bonfire_status(file_path):
-    bonfire_status = get_bonfire_status(file_path)
-    
-    # Clear previous entries
-    for widget in bonfire_list_canvas.winfo_children():
-        widget.destroy()
-    
-    # Create a frame inside the canvas
-    bonfire_list_frame = ttk.Frame(bonfire_list_canvas)
-    bonfire_list_canvas.create_window((0, 0), window=bonfire_list_frame, anchor="nw")
 
-    # Populate the frame with the bonfire list
-    for bonfire, status in bonfire_status.items():
-        bonfire_frame = ttk.Frame(bonfire_list_frame)
-        bonfire_frame.pack(fill="x", padx=10, pady=5)
-        
-        tk.Label(bonfire_frame, text=f"{bonfire} - Status:", anchor="w").pack(side="left", fill="x", padx=5)
-        
-        # Dropdown to change status with direct update
-        new_status_var = tk.StringVar(value=status)
-        def on_status_bonfire_change(selected_status, bonfire=bonfire):
-            update_bonfire_status(file_path, bonfire, selected_status)
-
-        status_options = tk.OptionMenu(bonfire_frame, new_status_var, "Locked", "Unlocked", command=lambda selection, bonfire=bonfire: on_status_bonfire_change(selection, bonfire))
-        status_options.pack(side="right", padx=5)
-
-    # Update the scroll region of the canvas
-    bonfire_list_frame.update_idletasks()
-    bonfire_list_canvas.config(scrollregion=bonfire_list_canvas.bbox("all"))
-
-
-def refresh_bonfire_tab():
-    file_path = file_path_var.get()
-    if file_path:
-        display_bonfire_status(file_path)
-        
-def on_world_flag_tab_selected(event):
-    selected_tab = notebook.tab(notebook.select(), "text")
-    if selected_tab == "World Flag":
-        refresh_bonfire_tab()
-
-##NPC
-
-def get_npc_status(file_path):
-    global npc_data
-    npc_status = {}
-    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)  # Find the last fixed offset
-    if offset1 is not None:
-        for npc, npc_hex in npc_data.items():
-            npc_value = int(npc_hex, 16)  # Convert hex string to integer
-            npc_distance = npc_offsets_for_npc_tap.get(npc)  # Retrieve offset distance
-            
-            if npc_distance is not None:
-                # Calculate the offset based on fixed offset and bonfire distance
-                npc_offset = calculate_offset2(offset1, npc_distance)
-                
-                # Read the value (try 1 byte first, then 2 bytes)
-                read_value = find_value_at_offset(file_path, npc_offset, byte_size=1)
-                if read_value != npc_value:
-                    read_value = find_value_at_offset(file_path, npc_offset, byte_size=2)
-
-                # Determine bonfire status
-                npc_status[npc] = "At Shrine/Friendly" if read_value == npc_value else "Uknown"
-            else:
-                print(f"Warning: Offset for npc '{npc}' not found.")
-    return npc_status
-
-def update_npc_status(file_path, npc_name, npc_status):
-    global npc_data
-    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)  # Find the last fixed offset
-    if offset1 is not None and npc_name in npc_data:
-        # Calculate offset for the specific bonfire
-        npc_distance = npc_offsets_for_npc_tap[npc_name]
-        npc_offset = calculate_offset2(offset1, npc_distance)
-        shrine_value = int(npc_data[npc_name], 16)  
-        # Determine the byte size based on the unlock_value
-        byte_size = 1 if shrine_value <= 0xFF else 2  # Use 1 byte if unlock_value fits, otherwise 2 bytes
-        
-        # Determine value to write: unlock_value for "Unlocked", 0 for "Locked"
-        if npc_status == "At Shrine/Friendly":
-            value = shrine_value
-        
-        # Write the value at the calculated offset
-        write_value_at_offset(file_path, npc_offset, value, byte_size=byte_size)
-        
-        messagebox.showinfo("Success", f"{npc_name} status updated to {npc_status}.")
-        
-        # Refresh display to reflect changes
-        display_npc_status(file_path)
-    else:
-        messagebox.showerror("Error", "Failed to update npc status. npc data or offset not found.")
-
-
-def display_npc_status(file_path):
-    npc_status = get_npc_status(file_path)
-    
-    # Clear previous entries
-    for widget in npc_list_canvas.winfo_children():
-        widget.destroy()
-    
-    # Create a frame inside the canvas
-    npc_list_frame = ttk.Frame(npc_list_canvas)
-    npc_list_canvas.create_window((0, 0), window=npc_list_frame, anchor="nw")
-
-    # Populate the frame with the bonfire list
-    for npc, status in npc_status.items():
-        npc_frame = ttk.Frame(npc_list_frame)
-        npc_frame.pack(fill="x", padx=10, pady=5)
-        
-        tk.Label(npc_frame, text=f"{npc} - Status:", anchor="w").pack(side="left", fill="x", padx=5)
-        
-        # Dropdown to change status with direct update
-        new_status_var = tk.StringVar(value=status)
-        def on_status_npc_change(selected_status, npc=npc):
-            update_npc_status(file_path, npc, selected_status)
-
-        status_options = tk.OptionMenu(npc_frame, new_status_var, "At Shrine/Friendly", "N/A", command=lambda selection, npc=npc: on_status_npc_change(selection, npc))
-        status_options.pack(side="right", padx=5)
-
-    # Update the scroll region of the canvas
-    npc_list_frame.update_idletasks()
-    npc_list_canvas.config(scrollregion=npc_list_canvas.bbox("all"))
-
-
-def refresh_npc_tab():
-    file_path = file_path_var.get()
-    if file_path:
-        display_npc_status(file_path)
-        
-def on_world_flag_tab_selected(event):
-    selected_tab = notebook.tab(notebook.select(), "text")
-    if selected_tab == "World Flag":
-        refresh_npc_tab()
 
 
 
@@ -4314,27 +4247,7 @@ notebook = ttk.Notebook(window)
 inventory_tab = ttk.Frame(notebook)
 sub_notebook = ttk.Notebook(inventory_tab)
 
-def on_tab_changed(event):
-    file_path = file_path_var.get()
-    if not file_path:  # Skip refresh if no file is selected
-        return
-        
-    gc.collect()
-    selected_tab = event.widget.tab(event.widget.index("current"))["text"]
-    
-    if selected_tab == "Rings":
-        refresh_ring_list(file_path)
-    elif selected_tab == "Inventory":
-        refresh_item_list(file_path)
-    elif selected_tab == "Weapons":
-        refresh_weapon_list(file_path)
-    elif selected_tab == "Armor":
-        refresh_armor_list(file_path)
-    elif selected_tab == "Bosses":
-        refresh_boss_tab()
 
-# Bind the NotebookTabChanged event to trigger the refresh when switching tabs
-notebook.bind("<<NotebookTabChanged>>", on_tab_changed)
 # Character Tab
 name_tab = ttk.Frame(notebook)
 tk.Label(name_tab, text="Current Character Name:").grid(row=0, column=0, padx=10, pady=10, sticky="e")
@@ -4540,45 +4453,7 @@ def update_stamina_value_and_refresh():
     refresh_on_click()
 
 
-def refresh_storage_box_tab():
-    storage_offset = find_hex_offset(file_path_var.get(), hex_pattern1_Fixed) + storage_box_distance
-    refresh_storage_quantity_list(file_path_var.get())
-def refresh_add_items_tab(file_path):
-    if not file_path:
-        return
-    # Refresh the list of items and update UI elements
-    show_goods_magic_list()
 
-
-def on_tab_changed(event):
-    
-    selected_tab = event.widget.tab(event.widget.index("current"))["text"]
-    
-    # Call the relevant function based on the selected tab
-    if selected_tab == "Add Items":
-        refresh_add_items_tab(file_path_var.get())
-    elif selected_tab == "Inventory":
-        refresh_item_list(file_path_var.get())
-    elif selected_tab == "Weapons":
-        refresh_weapon_list(file_path_var.get())
-    elif selected_tab == "Armor":
-        refresh_armor_list(file_path_var.get())
-    elif selected_tab == "Rings":
-        refresh_ring_list(file_path_var.get())
-    elif selected_tab == "Character (OFFLINE ONLY)":
-        refresh_character_tab()
-    elif selected_tab == "Souls":
-        refresh_souls_tab()
-    elif selected_tab == "Stats (OFFLINE ONLY)":
-        refresh_stats_tab()
-    elif selected_tab == "Storage Box":
-        refresh_storage_box_tab()
-    elif selected_tab == "Bosses":
-        refresh_boss_tab()
-    elif selected_tab == "Bonfire":
-        refresh_bonfire_tab()
-    elif selected_tab == "NPC":
-        refresh_npc_tab()
     
 ttk.Button(souls_tab, text="Update Souls", command=update_souls_value_and_refresh).grid(row=2, column=0, columnspan=2, pady=20)
 
