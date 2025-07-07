@@ -851,9 +851,9 @@ def replace_file_data(selected_file, selected_name, top):
         if original_file_name in file_mappings:
             mapping = file_mappings[original_file_name]
             
-            # Extract the number from the selected file (e.g., '2' from 'userdata0002')
-            if selected_file_name.startswith('userdata') and len(selected_file_name) >= 12:
-                source_number = selected_file_name[-1]  # Get the last character (the number)
+            # Extract the number from the selected file (e.g., '2' from 'USERDATA_02' or '10' from 'USERDATA_10')
+            if selected_file_name.startswith('USERDATA_') and len(selected_file_name) >= 10:
+                source_number = selected_file_name.split('_')[-1].lstrip('0') or '0'  # Get the number part after the underscore
                 
                 # Process related files
                 for source_template, target_file in mapping['related_files']:
