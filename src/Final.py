@@ -10,13 +10,9 @@ from tkinter import ttk, filedialog, messagebox, simpledialog, Scrollbar
 import gc
 from functools import wraps
 from time import time
-import random
-import sys
 import shutil
-import platform
 from system_test import test_system_compatibility
 from ds2unpackercopy import decrypt_ds2_sl2, encrypt_modified_files ## Credit to https://github.com/jtesta/souls_givifier
-import struct
 #just a flag
 # Constants
 hex_pattern1_Fixed = '0A 00 00 00 6C 00 00 00 BC 00 01'
@@ -48,80 +44,7 @@ stats_offsets_for_stats_tap = {
     "Adaptability": -7648,
 }
 
-#for bosses
-bosses_offsets_for_bosses_tap = {
-    "Iudex Gundyr": 23254,
-    "Vordt of the Boreal Valley": 4054,
-    "Curse-Rotted Greatwood": 6614,
-    "Crystal Sage": 11736,
-    "Abyss Watchers": 11734,
-    "High Lord Wolnir": 20694, ##test
-    "Oceiros, the Consumed King (pt1)": 4051,
-    "Oceiros, the Consumed King (pt2)": 4058,
-    "Champion Gundyr": 23251,
-    "Dancer of the Boreal Valley": 4059,
-    "Deacons of the Deep": 15574,
-    "Old Demon King": 20691,
-    "Pontiff Sulyvahn": 19416,
-    "Aldrich, Devourer of Gods": 19414,
-    "Dragonslayer Armour": 5334,
-    "Yhorm the Giant": 21974,
-    "Nameless King": 9176,
-    "Twin Princes": 14291,
-    "Soul of Cinder": 24534,
-    "Champion's Gravetender (DLC)": 25815,
-    "Father Ariandel and Sister Friede (DLC)": 25814,
-    "Halflight, Spear of the Church (DLC)": 30934,
-    "Darkeater Midir (DLC)": 30936,
-    "Slave Knight Gael (DLC)": 32214,
-    "Demon Prince (DLC)": 29654,
 
-
-}
-
-## NPC 
-
-npc_offsets_for_npc_tap = {
-    "Blacksmith Andre": 260,
-    "Ludleth of Courland": 246,
-    "Leonhard": 255,
-    "Hawkwood": 252,
-    "Greirat":264,
-    "Yoel of Londor": 243,
-    "Yuria of Londor": 244,
-    "Irina of Carim": 271,
-    "Sirris of the Sunless Realms": 251,
-    "Sir Vilhelm": 320,
-    "Cornyx of the Great Swamp": 267,
-    "Anri": 279,
-    "Horace": 302,
-    "Orbeck of Vinheim": 263,
-    "Karla": 274,
-    "Unbreakable Patches": 283,
-    "High Priestess Emma": 292,
-}
-
-##For bonfire
-bonfire_offsets_for_bonfire_tap = {
-    "Activate Lord of Cinders in Firelink Shrine": 1288,
-    "Cemetary of Ash": 23154,
-    "High Wall of Lothric": 3953,
-    "Undead Settlement": 6514,
-    "Archdragon Peak": 9074,
-    "Kiln of the First Flame": 24434,
-    "Catacombs of Carthus": 20594,
-    "Irithyll of the Boreal Valley": 19313,
-    "Unlock Ariende's Room": 25789,
-    "The Dreg Heap": 29554,
-    "Irithyll Dungeon": 21874,
-    "Road of Sacrifices": 11633,
-    "Cathedral of the Deep": 15474,
-    "Lothric Castle": 5234,
-    "Grand Archives": 14194,
-    "Painted World of Ariandel (DLC)": 25714,
-    "The Ringed City (DLC)": 30834,
-    "Filianore's Rest & Slave Knight Gael": 32114,
-}
 working_directory = os.path.dirname(os.path.abspath(__file__))
 os.chdir(working_directory)
 
@@ -162,6 +85,9 @@ upgrade_item_patterns = inventory_upgrade_hex_patterns.copy()
 
 inventory_spells_hex_patterns = load_and_copy_json("spells.json")
 spells_item_patterns = inventory_spells_hex_patterns.copy()
+
+inventory_key_hex_patterns = load_and_copy_json("key.json")
+key_item_patterns = inventory_key_hex_patterns.copy()
 
 
 # Main window
@@ -940,8 +866,6 @@ def display_character_names(character_names):
 def load_file_data(file_path):
     offset1 = find_hex_offset(file_path, hex_pattern1_Fixed)
     if offset1 is not None:
-        # Load character name
-        refresh_storage_quantity_list(file_path)
         for distance in possible_name_distances_for_name_tap:
             name_offset = calculate_offset2(offset1, distance)
             current_name = find_character_name(file_path, name_offset)
@@ -1147,75 +1071,7 @@ def update_stat(stat):
         messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
 
 
-##Coordin (no idea how this shit work)
 
-def convert_coordinates_to_hex(x: float, y: float, z: float) -> bytes:
-    """Convert coordinates to little-endian hex format"""
-    x_bytes = struct.pack('<f', x)
-    y_bytes = struct.pack('<f', y)
-    z_bytes = struct.pack('<f', z)
-    return x_bytes + y_bytes + z_bytes
-def read_coordinates(file_path: str, offset: int) -> tuple:
-    """Read x, y, z coordinates from the file at the given offset."""
-    with open(file_path, 'rb') as file:
-        file.seek(offset)
-        data = file.read(12)  # 4 bytes per float, 3 floats
-        x, y, z = struct.unpack('<fff', data)
-    return x, y, z
-def write_coordinates(file_path: str, offset: int, x: float, y: float, z: float):
-    """Write x, y, z coordinates to the file at the given offset."""
-    data = convert_coordinates_to_hex(x, y, z)
-    with open(file_path, 'r+b') as file:  # Open in read and write binary mode
-        file.seek(offset)
-        file.write(data)
-from tkinter import StringVar
-
-# Coordinate input
-
-def update_coordinates():
-        file_path = file_path_var.get()  # Use .get() to retrieve the value
-        pattern = 'FF FF FF FF 00 00 00 00 00 00 00 00 04'
-        offset = find_hex_offset(file_path, pattern)
-        
-        if offset is not None:
-            offset_to_read = offset + 20
-            with open(file_path, 'rb') as file:
-                file.seek(offset_to_read)
-                coordinates = file.read(12)
-            x, y, z = struct.unpack('<fff', coordinates)
-            result_text.delete(1.0, tk.END)
-            result_text.insert(1.0, f"{convert_coordinates_to_hex(x, y, z).hex(' ').upper()}")
-            
-            # Update entries with current values
-            for entry, coord in zip(entries, [x, y, z]):
-                entry.delete(0, tk.END)
-                entry.insert(0, str(coord))
-        else:
-            result_text.delete(1.0, tk.END)
-            result_text.insert(1.0, "Error: Pattern not found in file.")
-
-def save_coordinates():
-    file_path = file_path_var.get()  # Use .get() to retrieve the value
-    pattern = 'FF FF FF FF 00 00 00 00 00 00 00 00 04'
-    offset = find_hex_offset(file_path, pattern)
-    
-    if offset is not None:
-        offset_to_write = offset + 20
-        try:
-            x = float(entries[0].get())
-            y = float(entries[1].get())
-            z = float(entries[2].get())
-            data = convert_coordinates_to_hex(x, y, z)
-            with open(file_path, 'r+b') as file:
-                file.seek(offset_to_write)
-                file.write(data)
-            update_coordinates()  # Refresh display after writing
-        except ValueError:
-            result_text.delete(1.0, tk.END)
-            result_text.insert(1.0, "Error: Please enter valid numbers.")
-    else:
-        result_text.delete(1.0, tk.END)
-        result_text.insert(1.0, "Error: Pattern not found in file.")
 ###############################################
 
 ## Add rings( similar to items)
@@ -1921,6 +1777,105 @@ def find_and_replace_pattern_with_armors_and_update_counters_ds2(item_name, quan
 
     except Exception as e:
         messagebox.showerror("Error", f"Failed to add or update item: {e}")
+        
+def find_keys_items(section_data, absolute_offset_start, limit=37310):
+    found_keys = []
+
+    # Limit section data to the defined range
+    section_data = section_data[:limit]
+
+    for ring_name, ring_hex in key_item_patterns.items():
+        ring_bytes = bytes.fromhex(ring_hex)
+        search_pos = 0
+
+        while search_pos < len(section_data):
+            idx = section_data.find(ring_bytes, search_pos)
+            if idx == -1:
+                break
+
+            quantity_offset = idx
+            if quantity_offset < len(section_data):
+                quantity = section_data[quantity_offset]
+                item_start_offset = idx   # assuming item starts 4 bytes before the ID
+                if item_start_offset >= 0:
+                    found_keys.append((ring_name, quantity, absolute_offset_start + item_start_offset))
+            search_pos = idx + 1  # Move forward
+
+    return found_keys
+
+def refresh_keys_list(file_path):
+    file_path_var.set(file_path)
+    
+    search_start_offset = find_hex_offset(file_path, hex_pattern1_Fixed)
+    if search_start_offset is None: 
+        messagebox.showerror("Error", "Fixed Pattern 1 not found in the file.")
+        return
+    with open(file_path, 'rb') as file:
+        global loaded_file_data
+        loaded_file_data = bytearray(file.read())
+    # Extract section data
+    section_data = loaded_file_data[search_start_offset:search_start_offset + 800000]
+    
+
+    updated_rings = find_keys_items(section_data, search_start_offset, limit=373100)
+
+    # Clear UI
+    for widget in ring_list_frame.winfo_children():
+        widget.destroy()
+
+    if updated_rings:
+        # Create scrollable UI
+        ring_list_canvas = tk.Canvas(ring_list_frame)
+        ring_list_scrollbar = Scrollbar(ring_list_frame, orient="vertical", command=ring_list_canvas.yview)
+        ring_list_frame_inner = ttk.Frame(ring_list_canvas)
+
+        ring_list_frame_inner.bind(
+            "<Configure>",
+            lambda e: ring_list_canvas.configure(scrollregion=ring_list_canvas.bbox("all"))
+        )
+
+        ring_list_canvas.create_window((0, 0), window=ring_list_frame_inner, anchor="nw")
+        ring_list_canvas.configure(yscrollcommand=ring_list_scrollbar.set)
+
+        ring_list_canvas.pack(side="left", fill="both", expand=True)
+        ring_list_scrollbar.pack(side="right", fill="y")
+
+        # Populate ring items
+        for ring_name, quantity, offset in updated_rings:
+            ring_frame = ttk.Frame(ring_list_frame_inner)
+            ring_frame.pack(fill="x", padx=10, pady=5)
+
+            ring_label = tk.Label(ring_frame, text=f"{ring_name} (Quantity: {quantity})", anchor="w")
+            ring_label.pack(side="left", fill="x", padx=5)
+
+            delete_button = ttk.Button(ring_frame, text="Delete", command=lambda o=offset: choose_ring_delete(o))
+            delete_button.pack(side="right", padx=5)
+    else:
+        messagebox.showinfo("Info", "No item found.")
+
+
+def choose_ring_delete(offset):
+    file_path = file_path_var.get()
+    if not file_path:
+        messagebox.showerror("Error", "No file selected. Please load a file first.")
+        return
+
+    try:
+
+
+        # Refresh the ring list to reflect changes
+        refresh_keys_list(file_path)
+        print(f"Bytes around offset {offset:X}: {loaded_file_data[offset-4:offset+12].hex()}")
+
+
+        # Optionally notify user
+        print(f"Deleted ring at offset {offset:X}")
+        with open(file_path, 'r+b') as f:
+            f.seek(offset)
+            f.write(bytes.fromhex("00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"))
+        messagebox.showinfo("Success", "Item deleted successfully.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to delete ring: {e}")
 
 ## ADD bolts
 def find_and_replace_pattern_with_bolt_and_update_counters_ds2(item_name, quantity):
@@ -3469,30 +3424,7 @@ def find_last_hex_offset(file_path, hex_pattern):
 
 
 
-##bonfire
-def get_bonfire_status(file_path):
-    global bonfire_data
-    bonfire_status = {}
-    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)  # Find the last fixed offset
-    if offset1 is not None:
-        for bonfire, bonfire_hex in bonfire_data.items():
-            bonfire_value = int(bonfire_hex, 16)  # Convert hex string to integer
-            bonfire_distance = bonfire_offsets_for_bonfire_tap.get(bonfire)  # Retrieve offset distance
-            
-            if bonfire_distance is not None:
-                # Calculate the offset based on fixed offset and bonfire distance
-                bonfire_offset = calculate_offset2(offset1, bonfire_distance)
-                
-                # Read the value (try 1 byte first, then 2 bytes)
-                read_value = find_value_at_offset(file_path, bonfire_offset, byte_size=1)
-                if read_value != bonfire_value:
-                    read_value = find_value_at_offset(file_path, bonfire_offset, byte_size=2)
 
-                # Determine bonfire status
-                bonfire_status[bonfire] = "Unlocked" if read_value == bonfire_value else "Locked"
-            else:
-                print(f"Warning: Offset for bonfire '{bonfire}' not found.")
-    return bonfire_status
 
 
 
@@ -3500,747 +3432,7 @@ def get_bonfire_status(file_path):
 
 
 
-#RINGG
-def find_ring_items(file_path):
-    global found_ring
-    found_ring = []
-    with open(file_path, 'rb') as file:
-        data_chunk = file.read()
-        for ring_name, ring_hex in ring_hex_patterns.items():
-            ring_bytes = bytes.fromhex(ring_hex)
-            idx = data_chunk.find(ring_bytes)
-            if idx != -1:
-                # Assuming quantity is stored right after the ring ID in little-endian format
-                quantity_offset = idx + len(ring_bytes)
-                quantity = find_value_at_offset(file_path, quantity_offset, byte_size=1)
-                found_ring.append((ring_name, quantity))
-    return found_ring
 
-def refresh_ring_list(file_path):
-    # Find rings in the save file
-    updated_rings = find_ring_items(file_path)
-    
-    # Clear the previous list and display the updated rings
-    for widget in ring_list_frame.winfo_children():
-        widget.destroy()
-
-    if updated_rings:
-        # Create a canvas and scrollbar to contain the rings
-        ring_list_canvas = tk.Canvas(ring_list_frame)
-        ring_list_scrollbar = Scrollbar(ring_list_frame, orient="vertical", command=ring_list_canvas.yview)
-        ring_list_frame_inner = ttk.Frame(ring_list_canvas)
-
-        ring_list_frame_inner.bind(
-            "<Configure>",
-            lambda e: ring_list_canvas.configure(
-                scrollregion=ring_list_canvas.bbox("all")
-            )
-        )
-
-        ring_list_canvas.create_window((0, 0), window=ring_list_frame_inner, anchor="nw")
-        ring_list_canvas.configure(yscrollcommand=ring_list_scrollbar.set)
-
-        ring_list_canvas.pack(side="left", fill="both", expand=True)
-        ring_list_scrollbar.pack(side="right", fill="y")
-
-        # Add rings to the inner frame
-        for ring_name, quantity in updated_rings:
-            ring_frame = ttk.Frame(ring_list_frame_inner)
-            ring_frame.pack(fill="x", padx=10, pady=5)
-
-            ring_label = tk.Label(ring_frame, text=f"{ring_name} (Quantity: {quantity})", anchor="w")
-            ring_label.pack(side="left", fill="x", padx=5)
-
-            replace_button = ttk.Button(ring_frame, text="Replace", command=lambda ring=ring_name: choose_ring_replacement(ring))
-            replace_button.pack(side="right", padx=5)
-    else:
-        messagebox.showinfo("Info", "rings found.")
-
-def choose_ring_replacement(ring_name):
-    window2 = tk.Toplevel(window)
-    window2.title(f"Choose replacement for {ring_name}")
-
-    tk.Label(window2, text="Choose replacement ring:").pack(pady=5)
-    search_bar_frame = ttk.Frame(window2)
-    search_bar_frame.pack(pady=5)
-    tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = ttk.Entry(search_bar_frame, textvariable=ring_search_var)
-    search_entry.pack(side="left", padx=5)
-    search_entry.bind("<KeyRelease>", lambda event: filter_ring_replacement_list())
-
-    canvas = tk.Canvas(window2)
-    scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = ttk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(
-            scrollregion=canvas.bbox("all")
-        )
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    filter_ring_replacement_list_frame = scrollable_frame
-
-    def filter_ring_replacement_list():
-        for widget in filter_ring_replacement_list_frame.winfo_children():
-            widget.destroy()
-
-        search_term = ring_search_var.get().lower()
-        filtered_rings = {k: v for k, v in replacement_ring_items.items() if search_term in k.lower()}
-
-        col = 0
-        row = 0
-        for name, replacement_hex in filtered_rings.items():
-            def on_replace_click(name=name, replacement_hex=replacement_hex):
-                quantity = simpledialog.askinteger("Input", f"Enter new quantity for {name}:")
-                if quantity is not None:
-                    replace_ring(file_path_var.get(), ring_name, replacement_hex, new_quantity=quantity)
-                window2.destroy()
-
-            replacement_button = ttk.Button(filter_ring_replacement_list_frame, text=name, command=on_replace_click)
-            replacement_button.grid(row=row, column=col, padx=5, pady=5)
-            
-            col += 1
-            if col > 3:
-                col = 0
-                row += 1
-
-def replace_ring(file_path, ring_name, replacement_hex, new_quantity=None):
-    if new_quantity is None or not isinstance(new_quantity, int):
-        messagebox.showerror("Input Error", "Please enter a valid quantity.")
-        return
-
-    replacement_bytes = bytes.fromhex(replacement_hex)
-    original_bytes = bytes.fromhex(ring_hex_patterns[ring_name])
-    key_offset = find_hex_offset(file_path, hex_pattern1_Fixed) + goods_magic_offset
-
-    with open(file_path, 'r+b') as file:
-        file.seek(key_offset)
-        data_chunk = file.read(goods_magic_range)
-
-        # Search for the full pattern `original_bytes` in the file
-        pattern = original_bytes[:3] + b'\xA0' + original_bytes
-        pattern_offset = data_chunk.find(pattern)
-
-        if pattern_offset != -1:
-            # Position the file to replace the four bytes after `A0`
-            ring_id_offset = key_offset + pattern_offset + 4  # Four bytes after `A0`
-            file.seek(ring_id_offset)
-            file.write(replacement_bytes)  # Replace with new ID bytes
-
-            # Replace the three bytes before `A0`
-            pre_a0_offset = key_offset + pattern_offset  # Three bytes before `A0`
-            file.seek(pre_a0_offset)
-            file.write(replacement_bytes[:3])  # Replace the first three bytes
-
-            # Update quantity if specified
-            quantity_offset = ring_id_offset + len(replacement_bytes)
-            write_value_at_offset(file_path, quantity_offset, new_quantity, byte_size=1)
-
-            # Update the displayed rings list
-            for i, (found_ring_name, _) in enumerate(found_ring):
-                if found_ring_name == ring_name:
-                    found_ring[i] = (ring_name, new_quantity)
-                    break
-
-            # Refresh the ring list after replacement
-            refresh_ring_list(file_path)
-            messagebox.showinfo("Success", f"{ring_name} has been replaced.")
-        else:
-            messagebox.showerror("Not Found", f"Failed to find {ring_name} to replace.")
-    refresh_ring_list(file_path)
-
-
-
-
-# Weapon-related functions
-def find_weapon_items(file_path, start_offset=0, range_size=543168):
- 
-    global found_weapons
-    found_weapons = []
-
-    with open(file_path, 'rb') as file:
-        # Set the file position to the specified starting offset
-        file.seek(start_offset)
-        
-        # Read only the specified range
-        data_chunk = file.read(range_size) if range_size is not None else file.read()
-        
-        for weapon_name, weapon_hex in weapon_item_patterns.items():
-            weapon_bytes = bytes.fromhex(weapon_hex)
-            if weapon_bytes in data_chunk:
-                found_weapons.append(weapon_name)
-
-    return found_weapons
-
-# for armors will show some unused items
-def find_armor_items(file_path, start_offset=71550, range_size=None):
-
-    global found_armor
-    found_armor = []
-
-    with open(file_path, 'rb') as file:
-        # Set the file position to the specified starting offset
-        file.seek(start_offset)
-
-        # Read only the specified range
-        data_chunk = file.read(range_size) if range_size is not None else file.read()
-
-        for armor_name, armor_hex in armor_item_patterns.items():
-            armor_bytes = bytes.fromhex(armor_hex)
-            if armor_bytes in data_chunk:
-                found_armor.append(armor_name)
-
-    return found_armor
-
-
-# Gesture Hex Definitions
-gesture_old_id = bytes.fromhex("03 00 00 00 05")
-gesture_new_id = bytes.fromhex(
-    "03 00 00 00 05 00 01 00 07 00 02 00 09 00 03 00 0B 00 04 00 0D 00 05 00 0F 00 06 00 11 00 07 00 13 00 08 00 15 00 09 00 17 00 0A 00 19 00 0B 00 1B 00 0C 00 1D 00 0D 00 1F 00 0E 00 21 00 0F 00 23 00 10 00 25 00 11 00 27 00 12 00 29 00 13 00 2B 00 14 00 2D 00 15 00 2F 00 16 00 31 00 17 00 33 00 18 00 35 00 19 00 37 00 1A 00 39 00 1B 00 3B 00 1C 00 3D 00 1D 00 3F 00 1E 00 41 00 1F 00 43 00 20 00 45"
-)
-
-gesture_distance = -3800  # Offset from Fixed Pattern 2
-gesture_search_range = 500  # Range to search for the gesture ID
-
-def replace_gesture_hex_within_range(file_path):
-    offset1 = find_last_hex_offset(file_path, hex_pattern2_Fixed)
-    if offset1 is not None:
-        search_start_offset = calculate_offset2(offset1, gesture_distance)
-        try:
-            with open(file_path, 'r+b') as file:
-                # Read the 500-byte range for the old gesture ID
-                file.seek(search_start_offset)
-                data_chunk = file.read(gesture_search_range)
-                
-                # Find the old gesture ID within the range
-                gesture_offset = data_chunk.find(gesture_old_id)
-                if gesture_offset != -1:
-                    actual_gesture_offset = search_start_offset + gesture_offset
-                    file.seek(actual_gesture_offset)
-                    file.write(gesture_new_id)
-                    messagebox.showinfo("Success", "All gestures unlocked successfully!")
-                else:
-                    messagebox.showerror("Error", "Old gesture ID not found within the specified range.")
-        except IOError as e:
-            messagebox.showerror("File Error", f"Failed to open or modify the file: {e}")
-    else:
-        messagebox.showerror("Pattern Not Found", "Pattern not found in the file.")
-
-
-# weappons could be used for armor
-def replace_all_occurrences(file_path, old_hex, new_hex):
-    old_bytes = bytes.fromhex(old_hex)
-    new_bytes = bytes.fromhex(new_hex)
-    with open(file_path, 'r+b') as file:
-        data_chunk = file.read()
-        modified_chunk = data_chunk.replace(old_bytes, new_bytes)
-        file.seek(0)
-        file.write(modified_chunk)
-
-###storage 
-def update_item_quantity_in_file(file_path, item_offset, new_quantity_var):
-    try:
-        # Retrieve the new quantity value from the user input
-        new_quantity = int(new_quantity_var.get())
-
-        # Convert the quantity to bytes (2 bytes, little-endian)
-        quantity_bytes = new_quantity.to_bytes(2, 'little')
-
-        # Update the file with the new quantity value
-        with open(file_path, 'r+b') as file:
-            # Adjust the item_offset to point to the quantity bytes, which are located right after the item's hex
-            quantity_offset = item_offset + len(bytes.fromhex(item_hex_patterns["Lift Chamber Key"]))
-            file.seek(quantity_offset)
-            file.write(quantity_bytes)
-
-        # Inform the user of success and refresh the list
-        messagebox.showinfo("Success", f"Quantity updated to {new_quantity}.")
-        refresh_storage_quantity_list(file_path)  # Refresh the list after updating
-
-    except ValueError:
-        # Handle invalid input
-        messagebox.showerror("Invalid Input", "Please enter a valid quantity.")
-
-
-
-def refresh_storage_quantity_list(file_path):
-    storage_offset = find_hex_offset(file_path, hex_pattern1_Fixed) + storage_box_distance
-    updated_items = find_storage_items_with_quantity(file_path, storage_offset, drawer_range)
-
-    # Clear the previous list and display the updated items
-    for widget in storage_list_frame.winfo_children():
-        widget.destroy()
-
-    if updated_items:
-        for item_name, quantity, item_offset in updated_items:
-            item_frame = ttk.Frame(storage_list_frame)
-            item_frame.pack(fill="x", padx=10, pady=5)
-
-            item_label = tk.Label(item_frame, text=f"{item_name} (Quantity: {quantity})", anchor="w")
-            item_label.pack(side="left", fill="x", padx=5)
-
-            new_quantity_var = tk.StringVar()
-            new_quantity_entry = ttk.Entry(item_frame, textvariable=new_quantity_var, width=10)
-            new_quantity_entry.pack(side="left", padx=5)
-
-            update_button = ttk.Button(item_frame, text="Update Quantity", command=lambda item_offset=item_offset, new_quantity_var=new_quantity_var: update_item_quantity_in_file(file_path, item_offset, new_quantity_var))
-            update_button.pack(side="right", padx=5)
-    else:
-        messagebox.showinfo("Info", "items found.")
-
-def find_storage_items_with_quantity(file_path, storage_offset, storage_range):
-    global found_storage_items_with_quantity
-    found_storage_items_with_quantity = []
-    with open(file_path, 'rb') as file:
-        file.seek(storage_offset)
-        data_chunk = file.read(storage_range)
-        for item_name, item_hex in {**item_hex_patterns, **inventory_item_hex_patterns}.items():
-            item_bytes = bytes.fromhex(item_hex)
-            idx = 0
-            while (idx := data_chunk.find(item_bytes, idx)) != -1:
-                quantity_offset = idx + len(item_bytes)
-                quantity_bytes = data_chunk[quantity_offset:quantity_offset + 2]
-                quantity = int.from_bytes(quantity_bytes, 'little')
-                found_storage_items_with_quantity.append((item_name, quantity, storage_offset + idx))
-                idx += len(item_bytes) + 2
-    return found_storage_items_with_quantity
-
-
-def choose_replacement(item):
-
-    window2 = tk.Toplevel(window)
-    window2.title(f"Choose replacement for {item}")
-    window2.geometry("400x300")  # Set window size to make it fit the screen better
-
-    search_bar_frame = ttk.Frame(window2)
-    search_bar_frame.pack(pady=5)
-    tk.Label(window2, text="Choose replacement item:").pack(pady=5)
-    scrollable_frame = ttk.Frame(window2)
-    scrollable_frame.pack(padx=10, pady=5, fill="both", expand=True)
-    tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = ttk.Entry(search_bar_frame, textvariable=search_var)
-    search_entry.pack(side="left", padx=5)
-    search_entry.bind("<KeyRelease>", lambda event: filter_replacement_list())
-
-    canvas = tk.Canvas(window2)
-    scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = ttk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(
-            scrollregion=canvas.bbox("all")
-        )
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    filter_replacement_list_frame = scrollable_frame
-    def filter_replacement_list():
-            for widget in filter_replacement_list_frame.winfo_children():
-                widget.destroy()
-
-            search_term = search_var.get().lower()
-            filtered_items = {k: v for k, v in replacement_items.items() if search_term in k.lower()}
-
-            col = 0
-            row = 0
-            for name, replacement_hex in filtered_items.items():
-                def on_replace_click(name=name, replacement_hex=replacement_hex):
-                    quantity = simpledialog.askinteger("Input", f"Enter new quantity for {name}:")
-                    if quantity is not None:
-                        replace_item(file_path_var.get(), item, replacement_hex, new_quantity=quantity)
-                    
-                    
-                replacement_button = ttk.Button(filter_replacement_list_frame, text=name, command=on_replace_click)
-                replacement_button.grid(row=row, column=col, padx=5, pady=5)
-                
-                col += 1
-                if col > 3:
-                    col = 0
-                    row += 1
-# for rings 
-
-
-## for armor
-def choose_replacement_armor(item):
-
-    window2 = tk.Toplevel(window)
-    window2.title(f"Choose replacement for {item}")
-    window2.geometry("400x300")  # Set window size to make it fit the screen better
-
-    search_bar_frame = ttk.Frame(window2)
-    search_bar_frame.pack(pady=5)
-    tk.Label(window2, text="Choose replacement item:").pack(pady=5)
-    scrollable_frame = ttk.Frame(window2)
-    scrollable_frame.pack(padx=10, pady=5, fill="both", expand=True)
-    tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = ttk.Entry(search_bar_frame, textvariable=armor_search_var)
-    search_entry.pack(side="left", padx=5)
-    search_entry.bind("<KeyRelease>", lambda event: filter_armor_replacement_list())
-
-    canvas = tk.Canvas(window2)
-    scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = ttk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(
-            scrollregion=canvas.bbox("all")
-        )
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    filter_armor_replacement_list_frame = scrollable_frame
-    def filter_armor_replacement_list():
-            for widget in filter_armor_replacement_list_frame.winfo_children():
-                widget.destroy()
-
-            search_term = armor_search_var.get().lower()
-            filtered_items = {k: v for k, v in armor_replacement_items.items() if search_term in k.lower()}
-
-            col = 0
-            row = 0
-            for name, replacement_hex in filtered_items.items():
-                def on_replace_click(name=name, replacement_hex=replacement_hex):
-                    quantity = simpledialog.askinteger("Input", f"Enter new quantity for {name}:")
-                    if quantity is not None:
-                        replace_item(file_path_var.get(), item, replacement_hex, new_quantity=quantity)
-
-                replacement_button = ttk.Button(filter_armor_replacement_list_frame, text=name, command=on_replace_click)
-                replacement_button.grid(row=row, column=col, padx=5, pady=5)
-                
-                col += 1
-                if col > 3:
-                    col = 0
-                    row += 1
-
-def find_key_items(file_path, key_offset):
-    global found_items
-    found_items = []
-    with open(file_path, 'rb') as file:
-        file.seek(key_offset)
-        data_chunk = file.read(goods_magic_range)
-        for item_name, item_hex in item_hex_patterns.items():
-            item_bytes = bytes.fromhex(item_hex)
-            if item_bytes in data_chunk:
-                item_offset = data_chunk.index(item_bytes)
-                quantity_offset = key_offset + item_offset + len(item_bytes)
-                quantity = find_value_at_offset(file_path, quantity_offset, byte_size=1)
-                found_items.append((item_name, quantity))
-    
-    return found_items
-
-#for rings 
-
-# Goods items
-def replace_item(file_path, item_name, replacement_hex, new_quantity=None):
-    if new_quantity is None or not isinstance(new_quantity, int):
-        messagebox.showerror("Input Error", "Please enter a valid quantity.")
-        return
-
-    replacement_bytes = bytes.fromhex(replacement_hex)
-    original_bytes = bytes.fromhex(item_hex_patterns[item_name])
-    key_offset = find_hex_offset(file_path, hex_pattern1_Fixed) + goods_magic_offset
-
-    with open(file_path, 'r+b') as file:
-        file.seek(key_offset)
-        data_chunk = file.read(goods_magic_range)
-
-        # Search for the full pattern `original_bytes` in the file
-        pattern = original_bytes[:3] + b'\xB0' + original_bytes
-        pattern_offset = data_chunk.find(pattern)
-
-        if pattern_offset != -1:
-            # Position the file to replace the four bytes after `A0`
-            item_id_offset = key_offset + pattern_offset + 4  # Four bytes after `A0`
-            file.seek(item_id_offset)
-            file.write(replacement_bytes)  # Replace with new ID bytes
-
-            # Replace the three bytes before `A0`
-            pre_b0_offset = key_offset + pattern_offset  # Three bytes before `A0`
-            file.seek(pre_b0_offset)
-            file.write(replacement_bytes[:3])  # Replace the first three bytes
-
-            # Update quantity if specified
-            quantity_offset = item_id_offset + len(replacement_bytes)
-            write_value_at_offset(file_path, quantity_offset, new_quantity, byte_size=1)
-
-            # Update the displayed rings list
-            for i, (found_item_name, _) in enumerate(found_items):
-                if found_item_name == item_name:
-                    found_items[i] = (item_name, new_quantity)
-                    break
-
-            # Refresh the ring list after replacement
-            refresh_item_list(file_path)
-            messagebox.showinfo("Success", f"{item_name} has been replaced.")
-            if item_name not in item_hex_patterns:
-                messagebox.showerror("Item Not Found", f"Item '{item_name}' not found in item patterns.")
-                return
-
-        else:
-            messagebox.showerror("Not Found", f"Failed to find {item_name} to replace.")
-    refresh_ring_list(file_path)
-
-
-    
-#for ring   
-
-
-def refresh_item_list(file_path):
-    # Clear previous items to free memory
-    for widget in items_list_frame.winfo_children():
-        widget.destroy()
-    gc.collect()  # Force garbage collection
-
-    key_offset = find_hex_offset(file_path, hex_pattern1_Fixed) + goods_magic_offset
-    updated_items = find_key_items(file_path, key_offset)
-
-    # Clear the previous list and display the updated items
-    for widget in items_list_frame.winfo_children():
-        widget.destroy()
-
-    if updated_items:
-        # Create a canvas and scrollbar to contain the items
-        items_list_canvas = tk.Canvas(items_list_frame)
-        items_list_scrollbar = Scrollbar(items_list_frame, orient="vertical", command=items_list_canvas.yview)
-        items_list_frame_inner = ttk.Frame(items_list_canvas)
-
-        items_list_frame_inner.bind(
-            "<Configure>",
-            lambda e: items_list_canvas.configure(
-                scrollregion=items_list_canvas.bbox("all")
-            )
-        )
-
-        items_list_canvas.create_window((0, 0), window=items_list_frame_inner, anchor="nw")
-        items_list_canvas.configure(yscrollcommand=items_list_scrollbar.set)
-
-        items_list_canvas.pack(side="left", fill="both", expand=True)
-        items_list_scrollbar.pack(side="right", fill="y")
-
-        # Now add the items to the inner frame
-        for item_name, quantity in updated_items:
-            item_frame = ttk.Frame(items_list_frame_inner)
-            item_frame.pack(fill="x", padx=10, pady=5)
-
-            item_label = tk.Label(item_frame, text=f"{item_name} (Quantity: {quantity})", anchor="w")
-            item_label.pack(side="left", fill="x", padx=5)
-
-            replace_button = ttk.Button(item_frame, text="Replace", command=lambda item=item_name: choose_replacement(item))
-            replace_button.pack(side="right", padx=5)
-    else:
-        messagebox.showinfo("Info", "items found.")
-
-# refresh rings
-
-def refresh_weapon_list(file_path):
-    # Clear previous weapons to free memory
-    for widget in weapons_list_frame.winfo_children():
-        widget.destroy()
-    gc.collect()
-
-    updated_weapons = find_weapon_items(file_path)
-    
-    # Clear the previous list and display the updated items
-    for widget in weapons_list_frame.winfo_children():
-        widget.destroy()
-
-    if updated_weapons:
-        canvas = tk.Canvas(weapons_list_frame)
-        scrollbar = Scrollbar(weapons_list_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
-
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(
-                scrollregion=canvas.bbox("all")
-            )
-        )
-
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        for weapon_name in updated_weapons:
-            weapon_frame = ttk.Frame(scrollable_frame)
-            weapon_frame.pack(fill="x", padx=10, pady=5)
-            
-            weapon_label = tk.Label(weapon_frame, text=f"{weapon_name}", anchor="w")
-            weapon_label.pack(side="left", fill="x", padx=5)
-            
-            replace_button = ttk.Button(weapon_frame, text="Replace", command=lambda weapon=weapon_name: replace_weapon(weapon))
-            replace_button.pack(side="right", padx=5)
-    else:
-        messagebox.showinfo("Info", "weapons found.")
-
-# for armor
-def refresh_armor_list(file_path):
-    updated_armor = find_armor_items(file_path)
-    
-    # Clear the previous list and display the updated items
-    for widget in armor_list_frame.winfo_children():
-        widget.destroy()
-
-    if updated_armor:
-        canvas = tk.Canvas(armor_list_frame)
-        scrollbar = Scrollbar(armor_list_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
-
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(
-                scrollregion=canvas.bbox("all")
-            )
-        )
-
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        for armor_name in updated_armor:
-            armor_frame = ttk.Frame(scrollable_frame)
-            armor_frame.pack(fill="x", padx=10, pady=5)
-            
-            armor_label = tk.Label(armor_frame, text=f"{armor_name}", anchor="w")
-            armor_label.pack(side="left", fill="x", padx=5)
-            
-            replace_button = ttk.Button(armor_frame, text="Replace", command=lambda armor=armor_name: replace_armor(armor))
-            replace_button.pack(side="right", padx=5)
-    else:
-        messagebox.showinfo("Info", "armor found.")
-
-def replace_weapon(weapon_name):
-
-    window2 = tk.Toplevel(window)
-    window2.title(f"Replace {weapon_name}")
-
-    tk.Label(window2, text="Choose replacement weapon:").pack(pady=5)
-    search_bar_frame = ttk.Frame(window2)
-    search_bar_frame.pack(pady=5)
-    tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = ttk.Entry(search_bar_frame, textvariable=weapon_search_var)
-    search_entry.pack(side="left", padx=5)
-    search_entry.bind("<KeyRelease>", lambda event: filter_replacement_list())
-
-    canvas = tk.Canvas(window2)
-    scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = ttk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(
-            scrollregion=canvas.bbox("all")
-        )
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    filter_replacement_list_frame = scrollable_frame
-
-    def filter_replacement_list():
-        for widget in filter_replacement_list_frame.winfo_children():
-            widget.destroy()
-
-        search_term = weapon_search_var.get().lower()
-        filtered_items = {k: v for k, v in weapon_item_patterns.items() if search_term in k.lower()}
-
-        col = 0
-        row = 0
-        for name, replacement_hex in filtered_items.items():
-            def on_replace_click(name=name, replacement_hex=replacement_hex):
-                replace_all_occurrences(file_path_var.get(), weapon_item_patterns[weapon_name], replacement_hex)
-                refresh_weapon_list(file_path_var.get())
-                window2.destroy()
-
-            replacement_button = ttk.Button(filter_replacement_list_frame, text=name, command=on_replace_click)
-            replacement_button.grid(row=row, column=col, padx=5, pady=5)
-            
-            col += 1
-            if col > 3:
-                col = 0
-                row += 1
-
-#for armor
-def replace_armor(armor_name):
-
-    window2 = tk.Toplevel(window)
-    window2.title(f"Replace {armor_name}")
-
-    tk.Label(window2, text="Choose replacement armor:").pack(pady=5)
-    search_bar_frame = ttk.Frame(window2)
-    search_bar_frame.pack(pady=5)
-    tk.Label(search_bar_frame, text="Search:").pack(side="left", padx=5)
-    search_entry = ttk.Entry(search_bar_frame, textvariable=armor_search_var)
-    search_entry.pack(side="left", padx=5)
-    search_entry.bind("<KeyRelease>", lambda event: filter_armor_replacement_list())
-
-    canvas = tk.Canvas(window2)
-    scrollbar = Scrollbar(window2, orient="vertical", command=canvas.yview)
-    scrollable_frame = ttk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(
-            scrollregion=canvas.bbox("all")
-        )
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
-    filter_armor_replacement_list_frame = scrollable_frame
-
-    def filter_armor_replacement_list():
-        for widget in filter_armor_replacement_list_frame.winfo_children():
-            widget.destroy()
-
-        search_term_armor = armor_search_var.get().lower()
-        filtered_items_armor = {k: v for k, v in armor_item_patterns.items() if search_term_armor in k.lower()}
-
-        col = 0
-        row = 0
-        for name, replacement_armor_hex in filtered_items_armor.items():
-            def on_replace_click(name=name, replacement_armor_hex=replacement_armor_hex):
-                replace_all_occurrences(file_path_var.get(), armor_item_patterns[armor_name], replacement_armor_hex)
-                refresh_armor_list(file_path_var.get())
-                window2.destroy()
-
-            replacement_button = ttk.Button(filter_armor_replacement_list_frame, text=name, command=on_replace_click)
-            replacement_button.grid(row=row, column=col, padx=5, pady=5)
-            
-            col += 1
-            if col > 3:
-                col = 0
-                row += 1
 
 
 notebook = ttk.Notebook(window)
@@ -4401,9 +3593,7 @@ def refresh_stats_tab():
             stat_offset = calculate_offset2(offset1, distance)
             current_stat_value = find_value_at_offset(file_path_var.get(), stat_offset, byte_size=1)
             current_stats_vars[stat].set(current_stat_value if current_stat_value is not None else "N/A")
-def refresh_storage_box_tab():
-    storage_offset = find_hex_offset(file_path_var.get(), hex_pattern1_Fixed) + storage_box_distance
-    refresh_storage_quantity_list(file_path_var.get())
+
     
 def refresh_on_click():
     refresh_souls_tab()
@@ -4500,7 +3690,7 @@ ttk.Button(
 
 # Add instruction or label to the "Add Items" tab
 add_items_instructions = """
-lmao
+Don't add key items
 """
 tk.Label(
     add_items_tab,
@@ -4568,27 +3758,28 @@ notebook.add(souls_tab, text="Souls")
 notebook.add(stats_tab, text="Stats (OFFLINE ONLY)")
 
 
+# 1. Rings tab
+rings_tab = ttk.Frame(notebook)
+sub_notebook.add(rings_tab, text="Items")
+
+ring_list_frame = ttk.Frame(rings_tab)
+ring_list_frame.pack(fill="x", padx=10, pady=5)
+
+refresh_ring_button = ttk.Button(
+    rings_tab,
+    text="Scan for items",
+    command=lambda: refresh_keys_list(file_path_var.get())
+)
+refresh_ring_button.pack(pady=10)
+
+goodss_text = """
+Ignore the item quantities, they are not accurate.
+"""
 
 
-
-
-# Add a main "World Flag" tab to the main notebook
-
-
-
-# Create the "Coordinates" tab
-# Main coordinates tab
-
-
-# File path input (example)
-file_path_var = StringVar()
-
-# Input frame for X, Y, Z coordinates
-
-
-
-# Create the "Bosses" tab as a sub-tab within the "World Flag" sub-notebook
-
+goodss_label = tk.Label(rings_tab, text=goodss_text, wraplength=400, justify="left", anchor="nw")
+goodss_label.pack(padx=10, pady=10, fill="x") 
+notebook.add(rings_tab, text="Delete Keys")
 
 
 
