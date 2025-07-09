@@ -5,6 +5,7 @@
 -   edit souls
 -   Import PS4 save to PC
 -   Import PC save to PS4
+-   Delete Keys
 
 -   
 You no longer need to replace item
