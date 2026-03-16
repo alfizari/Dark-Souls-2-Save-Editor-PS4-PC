@@ -1,38 +1,49 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
 from glob import glob
-
-# Add Debug folder path
-debug_folder = os.path.join(os.getcwd(), 'src', 'Resources', 'Debug')
 from PyInstaller.utils.hooks import collect_submodules
-import PyInstaller.config
+from PyInstaller.building.build_main import Analysis, PYZ, EXE
 
-# Collect additional modules you need
+# Paths
+project_root = os.getcwd()
+debug_folder = os.path.join(project_root, 'src', 'Resources', 'Debug')
+
+# Collect all hidden imports for cryptography
 hiddenimports = collect_submodules('cryptography')
+# Add _cffi_backend explicitly
+hiddenimports += ['_cffi_backend']
+
+# Collect datas (resources)
+datas = [
+    (os.path.join(project_root, 'src', 'Resources'), 'Resources'),
+    # Include Debug folder
+    (debug_folder, os.path.join('Resources', 'Debug')),
+    # Include all files in Debug folder
+    *[(os.path.join(debug_folder, f), os.path.join('Resources', 'Debug'))
+      for f in os.listdir(debug_folder)
+      if os.path.isfile(os.path.join(debug_folder, f))]
+]
+
+# Analysis
 a = Analysis(
     ['Final.py'],
-    pathex=[os.getcwd()],
+    pathex=[project_root],
     binaries=[],
-    datas=[
-        (os.path.join(os.getcwd(), 'src', 'Resources'), 'Resources'),
-        # Add Debug folder and its contents
-        (debug_folder, os.path.join('Resources', 'Debug')),
-        # Include all files from Debug folder
-        *[(os.path.join(debug_folder, f), os.path.join('Resources', 'Debug')) 
-          for f in os.listdir(debug_folder) if os.path.isfile(os.path.join(debug_folder, f))]
-    ],
+    datas=datas,
     hiddenimports=hiddenimports,
     hookspath=['src/pyinstaller_hooks'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
-    optimize=0,
+    optimize=0
 )
 
-pyz = PYZ(a.pure)
+# Python archive
+pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
-exe_windows = EXE(
+# Executable
+exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
@@ -45,7 +56,7 @@ exe_windows = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=False,       # False for GUI
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
