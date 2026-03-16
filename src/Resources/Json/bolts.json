@@ -1,0 +1,23 @@
+{
+    "Wood Arrow": "C0 1F 9F 03",
+    "Iron Arrow": "D0 46 9F 03",
+    "Magic Arrow": "E0 6D 9F 03",
+    "Lightning Arrow": "F0 94 9F 03",
+    "Fire Arrow": "00 BC 9F 03",
+    "Dark Arrow": "10 E3 9F 03",
+    "Poison Arrow": "20 0A A0 03",
+    "Lacerating Arrow": "30 31 A0 03",
+    "Wooden Greatarrow": "40 58 A0 03",
+    "Iron Greatarrow": "50 7F A0 03",
+    "Magic Greatarrow": "60 A6 A0 03",
+    "Lightning Greatarrow": "70 CD A0 03",
+    "Fire Greatarrow": "80 F4 A0 03",
+    "Dark Greatarrow": "90 1B A1 03",
+    "Destructive Greatarrow": "A0 42 A1 03",
+    "Wood Bolt": "B0 69 A1 03",
+    "Heavy Bolt": "C0 90 A1 03",
+    "Magic Bolt": "D0 B7 A1 03",
+    "Lightning Bolt": "E0 DE A1 03",
+    "Fire Bolt": "F0 05 A2 03",
+    "Dark Bolt": "00 2D A2 03"
+}
