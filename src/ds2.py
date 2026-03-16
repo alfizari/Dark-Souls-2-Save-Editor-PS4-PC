@@ -57,8 +57,7 @@ def open_file():
     global MODE
 
     file_path = filedialog.askopenfilename(
-        title="Select a save file",
-        filetypes=[("SL2 files", "*.sl2"), ("All files", "*.*")]
+        title="Select a save file"
     )
     if not file_path:
         return None
