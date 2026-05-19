@@ -31,7 +31,7 @@ os.chdir(working_directory)
 
 def load_json(file_name):
     file_path = os.path.join(working_directory, "Resources/json", file_name)
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 goods_id   = load_json('items.json')
