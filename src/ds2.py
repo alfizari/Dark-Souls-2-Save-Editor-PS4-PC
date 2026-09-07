@@ -21,9 +21,9 @@ stats_offsets_for_stats_tap = {
     "Vitality":     36,
     "Strength":     40,
     "Dexterity":    42,
-    "Intelligence": 46,
-    "Faith":        48,
-    "Adaptability": 44,
+    "Intelligence": 44,
+    "Faith":        46,
+    "Adaptability": 48,
 }
 
 working_directory = os.path.dirname(os.path.abspath(__file__))
